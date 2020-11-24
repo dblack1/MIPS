@@ -1,10 +1,18 @@
+.data
+getInput: .asciiz "Enter Upper Bound of X: "
+outer: .asciiz "In the outer loop "
+inner: .asciiz "In the inner loop "
+newLine: .asciiz "\n"
+tab: .asciiz "      "	
+firstLine: .asciiz "x      y     x^2    2y^2\n"
+
 .text
 
 .globl main
 
 main:
 	addi $s2, $zero, 1
-	
+	addi $s3, $zero, 2
 	
         li $v0, 4
         la $a0, getInput
@@ -19,8 +27,7 @@ main:
      
         li $v0, 10
         syscall
-       
-        
+     
 compare:
 	add $t0, $zero, 1	# Initilize 1. $t0 = 1
 	add $t4, $zero, 1	# Initilize 1. $t4 = 1
@@ -37,7 +44,6 @@ compare:
 	mult $t0, $t0		# Multiply i * i or x^2
 	mflo $t2		# Load in the lo from our x^2. $t2 = x^2
 	
-	
 		Loop2:
 		
 		mult $t4, $t4
@@ -49,31 +55,38 @@ compare:
 		sub $t8, $t7, 1
 		sub $t9, $t2, 1
 		
-		bne $t8, $t2, Else
+		bne $t8, $t2, Else	#if equal then print
 		jal print
+		j Match
 		Else:
 		
-		
-		bne $t7, $t9, Else2
+		bne $t7, $t9, EndIf	#if equal then print
 		jal print
-		Else2:
+		j Match
 		
+		#Else2:
+		#addi $t4, $t4, 1
+		#move $t6, $t0
+		#j EndIf
 
-		#add $t7, $t7, 2
-		slt $t6, $t2, $t7 #set $t1 to 1 if $t2 < $t7
-		bne $t6, $zero, Else3
-		addi $t4, $t4, 1	# j++
-		j EndIf
+		slt $t6, $t2, $t7 #set $t1 to 1 if x^2 < 2y^2
+		bne $t6, $zero, Match
+		#j EndIf
 		
-		Else3:
-		move $t4, $s1
+		#Else3:
+		#move $t4, $s1
+		#move $t6, $t0
+		
+		Match:
+		move $t4, $t0
 		
 		EndIf:
-		slt $t5, $t4, $s1
-		bne $t5, $zero, Loop2
+		addi $t4, $t4, 1	# j++
+		#slt $t5, $t4, $s1	
+		bgt $t0, $t4, Loop2
 		
-	move $t4, $zero 
-	add $t4, $t4, 1
+	div $t4, $s3	#j = j / 2
+	mflo $t4
 	
 	addi $t0, $t0, 1	#i++
 	slt   $t3, $t0, $s1	# $t3 = 1 if i < x
@@ -125,12 +138,3 @@ print:
 	
 	jr $ra
 	
-        
-        .data
-              
-getInput: .asciiz "Enter Upper Bound of X: "
-outer: .asciiz "In the outer loop "
-inner: .asciiz "In the inner loop "
-newLine: .asciiz "\n"
-tab: .asciiz "      "	
-firstLine: .asciiz "x      y     x^2    2y^2\n"
