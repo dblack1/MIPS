@@ -11,8 +11,7 @@ firstLine: .asciiz "x      y     x^2    2y^2\n"
 .globl main
 
 main:
-	addi $s2, $zero, 1
-	addi $s3, $zero, 2
+	addi $s2, $zero, 2
 	
         li $v0, 4
         la $a0, getInput
@@ -29,82 +28,45 @@ main:
         syscall
      
 compare:
-	add $t0, $zero, 1	# Initilize 1. $t0 = 1
-	add $t4, $zero, 1	# Initilize 1. $t4 = 1
-	add $s1, $zero, $a0	# $s1 = x
-	
-	add $s0, $zero, 2
+	addi $t0, $a0, 0	# $t0 = max x
+	addi $t1, $zero, 1	# $t1 = x counter = i
 	
 	li $v0, 4
-	la $a0, firstLine
-	syscall
+        la $a0, firstLine
+        syscall
 	
 	Loop1:
-	
-	mult $t0, $t0		# Multiply i * i or x^2
-	mflo $t2		# Load in the lo from our x^2. $t2 = x^2
-	
+	bgt $t1, $t0, EndLoop1		# End Loop if i > x
+	addi $t2, $zero, 1		# $t2 = y counter = j
 		Loop2:
+			bgt $t2, $t1, EndLoop2		# End loop if j > i
 		
-		mult $t4, $t4
-		mflo $t6
+			mult $t1, $t1			# Square i
+			mflo $t3			# $t3 = x^2
 		
-		mult $t6, $s0
-		mflo $t7		# $t7 = 2y^2
+			mult $t2, $t2			# Square j
+			mflo $t4			
+			mult $t4, $s2
+			mflo $t5			# $t5 = 2y^2
 		
-		sub $t8, $t7, 1
-		sub $t9, $t2, 1
+			sub $t6, $t5, $t3		# $t6 = 2y^2 - x^2
+			beq $t6, 1, Print		# 2y^2 - x^2 = 1 so we have a match
+			beq $t6, -1, Print		# 2y^2 - x^2 = -1 so we have a match
+			b Increment			# No match so just increment
 		
-		bne $t8, $t2, Else	#if equal then print
-		jal print
-		j Match
-		Else:
+			Increment:
+			addi $t2, $t2, 1
+			b Loop2
 		
-		bne $t7, $t9, EndIf	#if equal then print
-		jal print
-		j Match
-		
-		#Else2:
-		#addi $t4, $t4, 1
-		#move $t6, $t0
-		#j EndIf
-
-		slt $t6, $t2, $t7 #set $t1 to 1 if x^2 < 2y^2
-		bne $t6, $zero, Match
-		#j EndIf
-		
-		#Else3:
-		#move $t4, $s1
-		#move $t6, $t0
-		
-		Match:
-		move $t4, $t0
-		
-		EndIf:
-		addi $t4, $t4, 1	# j++
-		#slt $t5, $t4, $s1	
-		bgt $t0, $t4, Loop2
-		
-	div $t4, $s3	#j = j / 2
-	mflo $t4
-	
-	addi $t0, $t0, 1	#i++
-	slt   $t3, $t0, $s1	# $t3 = 1 if i < x
-	bne  $t3, $zero, Loop1 	# go to Loop1 if i < x
+		EndLoop2:
+		add, $t1, $t1, 1	# increment i
+		b Loop1			# jump to the start of loop 1
+	EndLoop1:
+	jr $ra		#return
         
-        li $v0, 10
-        syscall
 
-
-#H:
-#move $t4, $s1
-#li $v0, 4
-#la $a0, inner
-#syscall
-#jal print
-        
-print:
-	move $a0, $t0		# print x
+	Print:
+	move $a0, $t1		# print x
 	li $v0, 1
 	syscall
 		
@@ -112,7 +74,7 @@ print:
 	la $a0, tab
 	syscall
 		
-	move $a0, $t4		# print y
+	move $a0, $t2		# print y
 	li $v0, 1	
 	syscall
 	
@@ -120,7 +82,7 @@ print:
 	la $a0, tab
 	syscall
 		
-	move $a0, $t2		# print x^2
+	move $a0, $t3		# print x^2
 	li $v0, 1
 	syscall
 		
@@ -128,7 +90,7 @@ print:
 	la $a0, tab
 	syscall
 		
-	move $a0, $t7		# print 2y^2
+	move $a0, $t5		# print 2y^2
 	li $v0, 1
 	syscall
 		
@@ -136,5 +98,5 @@ print:
 	la $a0, newLine
 	syscall
 	
-	jr $ra
+	b Increment
 	
