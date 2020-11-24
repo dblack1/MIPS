@@ -8,8 +8,6 @@ firstLine: .asciiz "x      y     x^2    2y^2\n"
 
 .text
 
-.globl main
-
 main:
 	addi $s2, $zero, 2
 	
@@ -30,6 +28,7 @@ main:
 compare:
 	addi $t0, $a0, 0	# $t0 = max x
 	addi $t1, $zero, 1	# $t1 = x counter = i
+	addi $t7, $zero, 0 	# $t7 = what j should be
 	
 	li $v0, 4
         la $a0, firstLine
@@ -37,7 +36,7 @@ compare:
 	
 	Loop1:
 	bgt $t1, $t0, EndLoop1		# End Loop if i > x
-	addi $t2, $zero, 1		# $t2 = y counter = j
+	addi $t2, $t7, 1		# $t2 = y counter = j
 		Loop2:
 			bgt $t2, $t1, EndLoop2		# End loop if j > i
 		
@@ -52,14 +51,23 @@ compare:
 			sub $t6, $t5, $t3		# $t6 = 2y^2 - x^2
 			beq $t6, 1, Print		# 2y^2 - x^2 = 1 so we have a match
 			beq $t6, -1, Print		# 2y^2 - x^2 = -1 so we have a match
-			b Increment			# No match so just increment
+			
+			bge $t5, $t3, GreaterThan
+			b Increment
+			
+			GreaterThan:
+			move $t2, $t1
+			addi $t2, $t2, 1
+			b EndLoop2
 		
 			Increment:
 			addi $t2, $t2, 1
 			b Loop2
 		
 		EndLoop2:
-		add, $t1, $t1, 1	# increment i
+		add $t1, $t1, 1		# increment i
+		div $t2, $s2		# j = j/2
+		mflo $t7
 		b Loop1			# jump to the start of loop 1
 	EndLoop1:
 	jr $ra		#return
@@ -98,5 +106,5 @@ compare:
 	la $a0, newLine
 	syscall
 	
-	b Increment
+	b EndLoop2
 	
